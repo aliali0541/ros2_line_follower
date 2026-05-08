@@ -1,0 +1,33 @@
+# --- ROS 2 / Colcon Build Artifacts ---
+# These are generated during 'colcon build' and should NEVER be pushed
+build/
+install/
+log/
+
+# --- Python Artifacts ---
+# Prevents compiled Python files from cluttering the repo
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.venv/
+venv/
+
+# --- ESP32 / Arduino / PlatformIO ---
+# Prevents compiled binaries and local environment settings from being pushed
+.pio/
+.vscode/
+*.elf
+*.bin
+*.hex
+*.out
+
+# --- OS Specific Junk ---
+.DS_Store
+Thumbs.db
+
+# --- ROS 2 Bag Files ---
+# Only ignore if they are very large (>100MB) and you are providing a link instead.
+# Otherwise, include them as they are a required deliverable.
+# *.mcap
+# *.db3
