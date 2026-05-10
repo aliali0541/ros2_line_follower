@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            "obstacle_avoider_node = line_follow.obstacle_avoider_node:main"
+            "obstacle_avoider_node = line_follow.obstacle_avoider_node:main",
+            "line_controller_node = line_follow.line_controller_node:main"
         ],
     },
 )
