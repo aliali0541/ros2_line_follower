@@ -26,7 +26,8 @@ setup(
         'console_scripts': [
             "obstacle_avoider_node = line_follow.obstacle_avoider_node:main",
             "line_controller_node = line_follow.line_controller_node:main",
-            "cmd_mux_node = line_follow.cmd_mux_node:main"
+            "cmd_mux_node = line_follow.cmd_mux_node:main",
+            "lap_monitor_node = line_follow.lap_monitor_node:main"
         ],
     },
 )
