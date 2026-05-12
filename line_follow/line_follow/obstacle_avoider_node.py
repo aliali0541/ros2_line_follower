@@ -11,7 +11,7 @@ class ObstacleAvoiderNode(Node):
         self.get_logger().info('Obstacle Avoider Node has been started.')
 
 
-        self.threshold_distance_ = 0.25 #meter
+        self.obstacle_distance_threshold = 0.25 #meter
         self.avoiding_ = False # are u in the process of avoiding an obstacle?
 
         
@@ -28,7 +28,7 @@ class ObstacleAvoiderNode(Node):
 
     def obstacle_callback(self, msg: Range):
         # if there is an obstacle within the threshold distance and we are not already avoiding, start the arc maneuver
-        if msg.range < self.threshold_distance_ and not self.avoiding_:
+        if msg.range < self.obstacle_distance_threshold and not self.avoiding_:
             self.get_logger().warn('Obstacle detected! Starting Arc Maneuver...')
             self.execute_arc_maneuver()
         
