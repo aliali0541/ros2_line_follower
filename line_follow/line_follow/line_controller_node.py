@@ -10,10 +10,10 @@ class LineControllerNode(Node):
         self.get_logger().info("The Node has been initiated!")
         
         # Tuning Parameters.
-        self.declare_parameter('kp', 1.0)
+        self.declare_parameter('kp', 1.2)
         self.declare_parameter('ki', 0.0)
-        self.declare_parameter('kd', 0.1)
-        self.declare_parameter('base_speed', 0.2)
+        self.declare_parameter('kd', 0.05)
+        self.declare_parameter('base_speed', 0.15)
         self.declare_parameter('max_brake_ratio', 0.5)
         
         # State Variables for Memory.
