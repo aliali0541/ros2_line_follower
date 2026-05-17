@@ -16,13 +16,13 @@
 #include <geometry_msgs/msg/vector3.h>
 
 // ============================================================
-// WIFI CONFIG
+// WIFI CONFIG             change this
 // ============================================================
 
-#define WIFI_SSID     "3AZA"
-#define WIFI_PASSWORD "Tarek123456789#"
-#define AGENT_IP      "192.168.1.69"
-#define AGENT_PORT    8888
+#define WIFI_SSID     "WIFI_SSID"
+#define WIFI_PASSWORD "WIFI_PASSWORD#"
+#define AGENT_IP      "AGENT_IP"
+#define AGENT_PORT    AGENT_PORT
 
 IPAddress local_IP(192, 168, 1, 75);
 IPAddress gateway(192, 168, 1, 1);
