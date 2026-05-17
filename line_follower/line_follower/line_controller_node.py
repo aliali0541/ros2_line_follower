@@ -1,74 +1,230 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
+from rcl_interfaces.msg import SetParametersResult
+from std_msgs.msg import Int32MultiArray
 from geometry_msgs.msg import Vector3
 from rclpy.qos import QoSProfile, ReliabilityPolicy, DurabilityPolicy
 
+class PIDLineFollower(Node):
 
-class TunerNode(Node):
     def __init__(self):
-        super().__init__('line_controller_node')
 
-        # Declare ROS 2 parameters with default values
-        self.declare_parameter('Kp', 10.0)
+        super().__init__('line_controller_node')
+        self.get_logger().info("The Node has been initiated!")
+
+        # Tuning Parameters.
+        self.declare_parameter('Kp', 2.0)
         self.declare_parameter('Ki', 0.0)
-        self.declare_parameter('Kd', 15.0)
-        self.declare_parameter('base_speed', 30.0)
-        self.declare_parameter('max_speed', 100.0)
+        self.declare_parameter('Kd', 8.0)
+
+        self.declare_parameter('base_speed', 80)
+        self.declare_parameter('max_speed', 150)
+        self.declare_parameter('recovery_speed', 60)
+
+        self.declare_parameter('alpha', 0.6)
+        self.declare_parameter('integral_limit', 20.0)
 
         qos = QoSProfile(
             depth=1,
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE
         )
-
-        # Publishers (Sending to ESP32)
-        self.pid_pub = self.create_publisher(Vector3, '/pid_tune', qos)
-        self.speed_pub = self.create_publisher(Vector3, '/cmd_vel', qos)
-
-        # Subscriber (Receiving from ESP32)
-        self.state_sub = self.create_subscription(Vector3, '/line_error', self.state_callback, qos)
-
-        # Timer to continuously publish parameters (5Hz)
-        self.timer = self.create_timer(0.2, self.publish_params)
         
-        self.get_logger().info("Line Follower Tuner Node Started.")
+        # load parameters.
+        self._load_params()
 
-    def publish_params(self):
-        # Fetch current parameter values
-        Kp = self.get_parameter('Kp').value
-        Ki = self.get_parameter('Ki').value
-        Kd = self.get_parameter('Kd').value
-        base_speed = self.get_parameter('base_speed').value
-        max_speed = self.get_parameter('max_speed').value
+        # live tuning support.
+        self.add_on_set_parameters_callback(self.param_callback)
 
-        # Pack and publish PID message
-        pid_msg = Vector3()
-        pid_msg.x = float(Kp)
-        pid_msg.y = float(Ki)
-        pid_msg.z = float(Kd)
-        self.pid_pub.publish(pid_msg)
+        self.get_logger().info(f"kp:{self.get_parameter('Kp').value}, ki:{self.get_parameter('Ki').value}, kd:{self.get_parameter('Kd').value}")
 
-        # Pack and publish Speed message
-        speed_msg = Vector3()
-        speed_msg.x = float(base_speed)
-        speed_msg.y = float(max_speed)
-        speed_msg.z = 0.0 # Unused in ESP32 currently
-        self.speed_pub.publish(speed_msg)
 
-    def state_callback(self, msg):
-        # Log the incoming state from ESP32
-        self.get_logger().info(f"State -> Error: {msg.x:.2f} | Filtered: {msg.y:.2f} | Integral: {msg.z:.2f}")
+        # SENSOR WEIGHTS.
+        
+        self.weights = [-2, -1, 0, 1, 2]
+
+        # State Variables for Memory.
+        
+        self.error = 0.0
+        self.filtered_error = 0.0
+        self.last_error = 0.0
+        self.integral = 0.0
+
+        # Creating Publisher and Subscriber.        
+        self.subscription = self.create_subscription(
+            Int32MultiArray,
+            '/line_error',
+            self.sensor_callback,
+            qos
+        )
+
+        self.motor_pub = self.create_publisher(
+            Vector3,
+            '/cmd_vel',
+            qos
+        )
+
+        # Get parameters.
+            
+    def _load_params(self):
+
+        self.Kp = self.get_parameter('Kp').value
+        self.Ki = self.get_parameter('Ki').value
+        self.Kd = self.get_parameter('Kd').value
+
+        self.base_speed = self.get_parameter('base_speed').value
+        self.max_speed = self.get_parameter('max_speed').value
+        self.recovery_speed = self.get_parameter('recovery_speed').value
+
+        self.alpha = self.get_parameter('alpha').value
+        self.integral_limit = self.get_parameter('integral_limit').value
+
+        # Update parameters.    
+    def param_callback(self, params):
+
+        for p in params:
+
+            if p.name == "Kp":
+                self.Kp = p.value
+
+            elif p.name == "Ki":
+                self.Ki = p.value
+
+            elif p.name == "Kd":
+                self.Kd = p.value
+
+            elif p.name == "base_speed":
+                self.base_speed = p.value
+
+            elif p.name == "max_speed":
+                self.max_speed = p.value
+
+            elif p.name == "recovery_speed":
+                self.recovery_speed = p.value
+
+            elif p.name == "alpha":
+                self.alpha = p.value
+
+            elif p.name == "integral_limit":
+                self.integral_limit = p.value
+
+        return SetParametersResult(successful=True)
+    
+    def sensor_callback(self, msg):
+
+        sensors = msg.data
+
+        # Position Calculations.
+        
+        sum_val = 0      # Weight of active sensors
+        active = 0       # NO. sensors that read black.
+
+        for i in range(5):
+
+            if sensors[i] == 1:
+                sum_val += self.weights[i]
+                active += 1
+
+        # LOST LINE HANDLING
+        
+        if active == 0:
+
+            if self.last_error < 0.0:
+                left = 0
+                #self.get_logger().warn("right")
+                right = self.recovery_speed
+
+            else :
+                left = self.recovery_speed
+                #self.get_logger().warn("left")
+
+                right = 0
+
+            """
+            else:
+                left = 0
+                right = 0
+                self.get_logger().warn("elsee")
+                left = self.recovery_speed
+                right = self.recovery_speed
+            """
+
+            self.publish_motor(left, right)
+            return
+
+        # ERROR Calculations.
+        
+        self.error = sum_val / active
+
+        # FILTERING.
+        
+        self.filtered_error = (
+            self.alpha * self.filtered_error
+            + (1 - self.alpha) * self.error
+        )
+
+        # PID Calculations.
+        
+        self.integral += self.filtered_error
+
+        # anti-windup.
+        self.integral = max(
+            min(self.integral, self.integral_limit),
+            -self.integral_limit
+        )
+
+        derivative = self.filtered_error - self.last_error
+
+        correction = (
+            self.Kp * self.filtered_error
+            +
+            self.Ki * self.integral
+            +
+            self.Kd * derivative
+        )
+
+        self.last_error = self.filtered_error
+
+        # Motor Speed Calculations.
+        
+        left_speed = int(self.base_speed + correction)
+        right_speed = int(self.base_speed - correction)
+
+        # Safety clamp.
+        left_speed = max(min(left_speed, self.max_speed), -self.max_speed)
+        right_speed = max(min(right_speed, self.max_speed), -self.max_speed)
+
+                
+        self.publish_motor(left_speed, right_speed)
+    
+    def publish_motor(self, left, right):
+
+        msg = Vector3()
+        msg.x = float(left)
+        msg.y = float(right)
+
+        self.motor_pub.publish(msg)
+
+        # DEBUG.
+    
+    # def debug(self, left, right):
+    #     self.get_logger().info(
+    #         f"Err:{self.filtered_error:.2f} L:{left} R:{right}"
+    #     )
 
 def main(args=None):
+
     rclpy.init(args=args)
-    node = TunerNode()
-    try:
-        rclpy.spin(node)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        node.destroy_node()
-        rclpy.shutdown()
+
+    node = PIDLineFollower()
+
+    rclpy.spin(node)
+
+    node.destroy_node()
+
+    rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()
