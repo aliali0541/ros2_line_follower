@@ -21,7 +21,7 @@ Before building this package, ensure your host machine meets the following requi
 * **Operating System:** Ubuntu 22.04 LTS (Jammy Jellyfish)
 * **Framework:** ROS 2 Humble Hawksbill (Desktop Install recommended)
 * **Build Tools:** `colcon` and `rosdep` initialized
-
+* **micro-ROS Agent:** Required to bridge communication between the ROS 2 network and the ESP32 microcontroller over WiFi/Serial.
 
 ## Installation & Build Instructions
 
