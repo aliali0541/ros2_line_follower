@@ -38,7 +38,9 @@ setup(
 
     entry_points={
         'console_scripts': [
-            'line_controller_node = line_follower.line_controller_node:main'
+            'line_controller_node = line_follower.line_controller_node:main',
+            'odometry_node=line_follower.odometry_node:main',
+            'lap_detector_node=line_follower.lap_detector_node:main'
         ],
     },
 )
