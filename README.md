@@ -69,7 +69,7 @@ ros2 launch line_follower line_follower.launch.py
 
 **Plotting the Trajectory:** After running the robot and recording odometry data, you can visualize the path by running:
 ```bash
-python3 src/ros2_line_follower/line_follower/plot/trajectory.py
+python3 src/line_follower/plot/trajectory.py
 ```
 
 
