@@ -16,7 +16,7 @@
 #include <geometry_msgs/msg/vector3.h>
 
 // ============================================================
-// WIFI CONFIG             change this
+// WIFI CONFIG             [change this section]
 // ============================================================
 
 #define WIFI_SSID     "WIFI_SSID"
@@ -58,12 +58,12 @@ IPAddress subnet(255, 255, 255, 0);
 #define ENCODER_RIGHT 19
 
 // ============================================================
-// ULTRASONIC + BUZZER (ADDED ONLY)
+// ULTRASONIC + BUZZER
 // ============================================================
 
 #define TRIG_PIN 26
 #define ECHO_PIN 27
-#define BUZZER_PIN 13   // changed to safe pin
+#define BUZZER_PIN 13
 
 const float OBSTACLE_DISTANCE = 25.0; // cm
 bool obstacle_detected = false;
@@ -143,7 +143,7 @@ void error_loop()
 }
 
 // ============================================================
-// ULTRASONIC FUNCTION (ADDED)
+// ULTRASONIC FUNCTION
 // ============================================================
 
 float readDistanceCM()
@@ -163,7 +163,7 @@ float readDistanceCM()
 }
 
 // ============================================================
-// SAFETY CHECK (ADDED)
+// SAFETY CHECK
 // ============================================================
 
 void safetyCheck()
