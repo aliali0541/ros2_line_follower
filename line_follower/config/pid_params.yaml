@@ -1,14 +1,14 @@
 line_controller_node:
   ros__parameters:
 
-    Kp: 2.0
+    Kp: 25.0
     Ki: 0.0
-    Kd: 8.0
+    Kd: 140.0
 
-    base_speed: 86
+    base_speed: 70 
     max_speed: 150
 
-    recovery_speed: 60
+    recovery_speed: 80  
 
     alpha: 0.7
     integral_limit: 20.0
