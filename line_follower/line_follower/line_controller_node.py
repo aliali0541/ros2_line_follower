@@ -12,17 +12,18 @@ class PIDLineFollower(Node):
 
         super().__init__('line_controller_node')
         self.get_logger().info("The Node has been initiated!")
+        self.last_seen_direction = 0
 
-        # Tuning Parameters.
-        self.declare_parameter('Kp', 2.0)
+        # Tuning Parameters.        
+        self.declare_parameter('Kp', 25.0)
         self.declare_parameter('Ki', 0.0)
-        self.declare_parameter('Kd', 8.0)
+        self.declare_parameter('Kd', 140.0)
 
-        self.declare_parameter('base_speed', 80)
+        self.declare_parameter('base_speed', 70)
         self.declare_parameter('max_speed', 150)
-        self.declare_parameter('recovery_speed', 60)
+        self.declare_parameter('recovery_speed', 80)
 
-        self.declare_parameter('alpha', 0.6)
+        self.declare_parameter('alpha', 0.7)
         self.declare_parameter('integral_limit', 20.0)
 
         qos = QoSProfile(
@@ -45,7 +46,7 @@ class PIDLineFollower(Node):
         self.weights = [-2, -1, 0, 1, 2]
 
         # State Variables for Memory.
-        
+        #         
         self.error = 0.0
         self.filtered_error = 0.0
         self.last_error = 0.0
@@ -130,32 +131,25 @@ class PIDLineFollower(Node):
         
         if active == 0:
 
-            if self.last_error < 0.0:
-                left = 0
-                #self.get_logger().warn("right")
-                right = self.recovery_speed
+            if self.last_seen_direction == 0:
+                self.publish_motor(0,0)
 
-            else :
-                left = self.recovery_speed
-                #self.get_logger().warn("left")
-
-                right = 0
-
-            """
+            elif self.last_seen_direction > 0.0:
+                self.publish_motor(self.recovery_speed,0)
+                
             else:
-                left = 0
-                right = 0
-                self.get_logger().warn("elsee")
-                left = self.recovery_speed
-                right = self.recovery_speed
-            """
-
-            self.publish_motor(left, right)
+                self.publish_motor(0, self.recovery_speed)
+            
             return
 
         # ERROR Calculations.
         
         self.error = sum_val / active
+
+        if self.error > 0:
+            self.last_seen_direction = 1
+        elif self.error < 0:
+            self.last_seen_direction = -1     
 
         # FILTERING.
         
