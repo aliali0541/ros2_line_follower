@@ -71,7 +71,7 @@ class RaceAnalyzer(Node):
 
         # ================= LAP DETECTION =================
 
-        START_ZONE = 0.30  # meters
+        START_ZONE = 0.15  # meters
 
         if dist < START_ZONE:
 
